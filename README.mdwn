@@ -1,0 +1,16 @@
+Gerrit modules for Ansible.
+
+Dependencies:
+  - [pygerrit]
+  - [requests]
+
+Related projects:
+
+  - [gerritlib]: Wraps the Gerrit SSH command interface.
+  - [Jeepyb]: Helper tools for OpenStack's Gerrit instance
+
+[pygerrit]: https://www.github.com/sonyxperiadev/pygerrit
+[requests]: http://www.python-requests.org/
+
+[gerritlib]: https://git.openstack.org/cgit/openstack-infra/gerritlib/tree/
+[Jeepyb]: http://ci.openstack.org/jeepyb.html
