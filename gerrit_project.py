@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# pygerrit.rest example:
-# https://github.com/sonyxperiadev/pygerrit/blob/master/rest_example.py
 
+###### Common part shared betwen all Gerrit modules
 
 import pygerrit.rest
 import requests.auth
@@ -33,6 +32,59 @@ GERRIT_COMMON_ARGUMENTS = dict(
     gerrit_username = dict(),
     gerrit_password = dict()
 )
+
+
+class AnsibleGerritError(Exception):
+    pass
+
+
+def quote(name):
+    return urllib.quote(name, safe='')
+
+
+def gerrit_connection(gerrit_url=None, gerrit_username=None,
+                      gerrit_password=None, **ignored_params):
+
+    # Gerrit supports HTTP Digest and HTTP Basic auth. Neither is amazingly
+    # secure but HTTP Digest is much better than HTTP Basic. HTTP Basic auth
+    # involves sending a password in cleartext. This code only supports Digest.
+
+    if gerrit_username and gerrit_password:
+        auth = requests.auth.HTTPDigestAuth(
+            gerrit_username, gerrit_password)
+    else:
+        auth = None
+
+    gerrit = pygerrit.rest.GerritRestAPI(
+        url=gerrit_url, auth=auth)
+    return gerrit
+
+
+def value_from_param(field, spec, param_value):
+    if 'choices' in spec:
+        if param_value not in spec['choices']:
+            raise ValueError(
+                "'%s' is not valid for field %s" % (param_value, field))
+        value = param_value.upper()
+    else:
+        value = param_value
+    return value
+
+
+def value_from_config_info(field, spec, info_value):
+    if isinstance(info_value, dict):
+        # This is a ConfigParameterInfo field. We need to figure out if the
+        # value is TRUE, FALSE or INHERIT.
+        if 'configured_value' in info_value:
+            value = info_value['configured_value']
+        else:
+            value = 'INHERIT'
+    else:
+        value = info_value
+    return value
+
+
+###### End common part shared betwen all Gerrit modules
 
 
 # From Gerrit ConfigInfo / ConfigInput entity (besides 'name')
@@ -52,32 +104,6 @@ PROJECT_ARGUMENTS = dict(
     state       = dict(default='active',
                        choices=['active', 'hidden', 'read_only'])
 )
-
-
-class AnsibleGerritError(Exception):
-    pass
-
-
-def quote(name):
-    return urllib.quote(name, safe='')
-
-
-def gerrit_connection(gerrit_url=None, gerrit_username=None,
-                      gerrit_password=None, **ignored_params):
-
-    # Gerrit supports HTTP Digest and HTTP Basic auth. Neither is amazingly
-    # secure but HTTP Digest is much better than HTTP Basic. HTTP Basic auth
-    # involves sending a password in cleartext.
-
-    if gerrit_username and gerrit_password:
-        auth = requests.auth.HTTPDigestAuth(
-            gerrit_username, gerrit_password)
-    else:
-        auth = None
-
-    gerrit = pygerrit.rest.GerritRestAPI(
-        url=gerrit_url, auth=auth)
-    return gerrit
 
 
 def create_project(gerrit, name=None):
@@ -106,30 +132,6 @@ def remove_project(gerrit, name=None):
     return changed
 
 
-def value_from_param(field, spec, param_value):
-    if 'choices' in spec:
-        if param_value not in spec['choices']:
-            raise ValueError(
-                "'%s' is not valid for field %s" % (param_value, field))
-        value = param_value.upper()
-    else:
-        value = param_value
-    return value
-
-
-def value_from_config_info(field, spec, info_value):
-    if isinstance(info_value, dict):
-        # This is a ConfigParameterInfo field. We need to figure out if the
-        # value is TRUE, FALSE or INHERIT.
-        if 'configured_value' in info_value:
-            value = info_value['configured_value']
-        else:
-            value = 'INHERIT'
-    else:
-        value = info_value
-    return value
-
-
 def update_project(gerrit, name=None, **params):
     change = False
 
@@ -153,7 +155,6 @@ def update_project(gerrit, name=None, **params):
     # To err on the side of safety, we provide values for all the fields we
     # can.
     config_input = {}
-
 
     # This is going to be ugly, needs to be split up into functions.
     for field, spec in PROJECT_ARGUMENTS.iteritems():
