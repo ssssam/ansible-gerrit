@@ -16,6 +16,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+DOCUMENTATION = '''
+---
+module: gerrit_project
+author: Sam Thursfield
+short_description: Manage projects in an instance of Gerrit Code Review
+'''
+
+
 ###### Common part shared betwen all Gerrit modules
 
 import pygerrit.rest
