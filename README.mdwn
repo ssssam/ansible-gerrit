@@ -1,4 +1,6 @@
-Gerrit modules for Ansible.
+# Gerrit modules for Ansible.
+
+I just hacked this up in a day so don't expect too much from it yet.
 
 Dependencies:
   - [pygerrit]
