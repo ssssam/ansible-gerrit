@@ -130,6 +130,7 @@ def update_project(gerrit, name=None, **params):
                     change = True
 
                 if new_value is not None:
+                    config_info[field] = new_value
                     config_input[field] = new_value
 
     if change:
