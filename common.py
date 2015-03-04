@@ -93,16 +93,15 @@ def value_from_config_info(field, spec, info_value):
     return value
 
 
-def get_boolean(gerrit, path, field):
-    fullpath = path + '/' + field
-    response = gerrit.get(fullpath)
+def get_boolean(gerrit, path):
+    response = gerrit.get(path)
     if response == 'ok':
         value = True
     elif response == '':
         value = False
     else:
         raise AnsibleGerritError(
-            "Unexpected response for %s: %s" % (fullpath, response))
+            "Unexpected response for %s: %s" % (path, response))
     return value
 
 
