@@ -2,22 +2,33 @@
 
 I just hacked this up in two days so don't expect too much from it yet.
 
-Dependencies:
+## Dependencies
+
   - [pygerrit]
   - [requests]
-
-Related projects:
-
-  - [gerritlib]: Wraps the Gerrit SSH command interface.
-  - [Jeepyb]: Helper tools for OpenStack's Gerrit instance
 
 [pygerrit]: https://www.github.com/sonyxperiadev/pygerrit
 [requests]: http://www.python-requests.org/
 
+## Usage
+
+In order to share code between the self-contained module files, there's a
+simple Makefile you need to run to generate the final .py files. It simply
+concatenates `common.py` with each `module.py.in` file, and should be run like
+this:
+
+    make
+
+## Related projects:
+
+  - [gerritlib]: Wraps the Gerrit SSH command interface.
+  - [Jeepyb]: Helper tools for OpenStack's Gerrit instance
+
 [gerritlib]: https://git.openstack.org/cgit/openstack-infra/gerritlib/tree/
 [Jeepyb]: http://ci.openstack.org/jeepyb.html
 
-# License
+
+## License
 
 Copyright (C) 2015  Codethink Limited
 
