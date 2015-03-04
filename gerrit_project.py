@@ -36,9 +36,9 @@ from ansible.module_utils.basic import *
 
 
 GERRIT_COMMON_ARGUMENTS = dict(
-    gerrit_url      = dict(required=True),
-    gerrit_username = dict(),
-    gerrit_password = dict()
+    gerrit_url      = dict(type='str', required=True),
+    gerrit_username = dict(type='str'),
+    gerrit_password = dict(type='str')
 )
 
 
