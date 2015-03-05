@@ -31,16 +31,24 @@ short_description: Manage projects in an instance of Gerrit Code Review
 '''
 
 
-# From Gerrit ConfigInfo / ConfigInput entity (besides 'name')
-# https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#config-info
+EXAMPLES = '''
+- gerrit_project:
+    name: Morph
+    description: Baserock build tool
+    state: active
+    gerrit_url: http://gerrit.example.com:8080/
+    gerrit_admin_username: dicky
+    gerrit_admin_password: b0sst0nes
+'''
+
+
+# https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html
+
 
 PROJECT_ARGUMENTS = dict(
     name        = dict(required=True),
 
     description = dict(),
-    #HEAD
-    #owners
-    #parent
 
     # You might expect there to be an 'absent' state, but there's actually no
     # way to delete projects out of the box with Gerrit. There is a

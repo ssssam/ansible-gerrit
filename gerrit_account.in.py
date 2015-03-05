@@ -30,8 +30,23 @@ author: Sam Thursfield
 short_description: Manage accounts in an instance of Gerrit Code Review
 '''
 
-# From Gerrit AccountInfo / AccountInput entity
-# https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
+
+EXAMPLES = '''
+- gerrit_account:
+    username: Jenkins
+    fullname: Jenkins continuous integration tool
+    email: admin@example.com
+    groups:
+        - Non-Interactive Users
+        - Testers
+    gerrit_url: http://gerrit.example.com:8080/
+    gerrit_admin_username: dicky
+    gerrit_admin_password: b0sst0nes
+'''
+
+
+# https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html
+
 
 ACCOUNT_ARGUMENTS = dict(
     username        = dict(type='str', required=True),

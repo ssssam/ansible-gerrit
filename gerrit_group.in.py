@@ -30,7 +30,27 @@ author: Sam Thursfield
 short_description: Manage groups in an instance of Gerrit Code Review
 '''
 
+
+EXAMPLES = '''
+- gerrit_group:
+    name: Submitters
+    description: Users that can submit patches
+    owner: Administrators
+    included_groups:
+        - Registered Users
+    gerrit_url: http://gerrit.example.com:8080/
+    gerrit_admin_username: dicky
+    gerrit_admin_password: b0sst0nes
+
+- gerrit_group:
+    name: Testers
+    description: Accounts that can give +1/-1 Verified
+    owner: Administrators
+'''
+
+
 # https://gerrit-review.googlesource.com/Documentation/rest-api-groups.html
+
 
 GROUP_ARGUMENTS = dict(
     name            = dict(type='str', required=True),
