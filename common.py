@@ -37,9 +37,9 @@ import urllib
 
 
 GERRIT_COMMON_ARGUMENTS = dict(
-    gerrit_url      = dict(type='str', required=True),
-    gerrit_username = dict(type='str'),
-    gerrit_password = dict(type='str')
+    gerrit_url            = dict(type='str'),
+    gerrit_admin_username = dict(type='str'),
+    gerrit_admin_password = dict(type='str')
 )
 
 
@@ -51,16 +51,23 @@ def quote(name):
     return urllib.quote(name, safe="")
 
 
-def gerrit_connection(gerrit_url=None, gerrit_username=None,
-                      gerrit_password=None, **ignored_params):
+def gerrit_connection(gerrit_url=None, gerrit_admin_username=None,
+                      gerrit_admin_password=None, **ignored_params):
 
     # Gerrit supports HTTP Digest and HTTP Basic auth. Neither is amazingly
     # secure but HTTP Digest is much better than HTTP Basic. HTTP Basic auth
     # involves sending a password in cleartext. This code only supports Digest.
 
-    if gerrit_username and gerrit_password:
+    if gerrit_url is None:
+        gerrit_url = os.environ.get('GERRIT_URL')
+    if gerrit_admin_username is None:
+        gerrit_admin_username = os.environ.get('GERRIT_ADMIN_USERNAME')
+    if gerrit_admin_password is None:
+        gerrit_admin_password = os.environ.get('GERRIT_ADMIN_PASSWORD')
+
+    if gerrit_admin_username and gerrit_admin_password:
         auth = requests.auth.HTTPDigestAuth(
-            gerrit_username, gerrit_password)
+            gerrit_admin_username, gerrit_admin_password)
     else:
         auth = None
 
