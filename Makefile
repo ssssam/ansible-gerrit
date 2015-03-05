@@ -18,6 +18,7 @@
 
 MODULES = \
     gerrit_account.py \
+    gerrit_group.py \
     gerrit_project.py
 
 all: ${MODULES}
