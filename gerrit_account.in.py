@@ -96,21 +96,21 @@ def create_account_ssh_key(gerrit, account_id, ssh_public_key):
 
 def create_group_membership(gerrit, account_id, group_id):
     logging.info('Creating membership of %s in group %s', account_id, group_id)
-    path = 'groups/%s/accounts/%s' % (quote(group_id), account_id)
+    path = 'groups/%s/members/%s' % (quote(group_id), account_id)
     gerrit.put(path)
 
 
-def ensure_only_member_of_these_groups(gerrit, account_id, groups):
+def ensure_only_member_of_these_groups(gerrit, account_id, ansible_groups):
     path = 'accounts/%s' % account_id
     group_info_list = get_list(gerrit, path + '/groups')
 
     changed = False
-    found_groups = []
+    gerrit_groups = []
     for group_info in group_info_list:
-        if group_info['name'] in groups:
+        if group_info['name'] in ansible_groups:
             logging.info("Preserving %s membership of group %s", path,
                          group_info)
-            found_groups.append(group_info)
+            gerrit_groups.append(group_info['name'])
         else:
             logging.info("Removing %s from group %s", path, group_info)
             membership_path = 'groups/%s/members/%s' % (
@@ -118,11 +118,19 @@ def ensure_only_member_of_these_groups(gerrit, account_id, groups):
             gerrit.delete(membership_path)
             changed = True
 
-    for new_group_info in set(found_groups).difference(groups):
-        create_group_membership(gerrit, account_id, new_group_info['id'])
-        changed = True
+    # If the user gave group IDs instead of group names, this will
+    # needlessly recreate the membership. The only actual issue will be that
+    # Ansible reports 'changed' when nothing really did change, I think.
+    #
+    # We might receive [""] when the user tries to pass in an empty list, so
+    # handle that.
+    for new_group in set(ansible_groups).difference(gerrit_groups):
+        if len(new_group) > 0:
+            create_group_membership(gerrit, account_id, new_group)
+            gerrit_groups.append(new_group)
+            changed = True
 
-    return groups, changed
+    return gerrit_groups, changed
 
 
 def ensure_only_one_account_email(gerrit, account_id, email):
