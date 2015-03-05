@@ -35,10 +35,13 @@ short_description: Manage groups in an instance of Gerrit Code Review
 GROUP_ARGUMENTS = dict(
     name            = dict(type='str', required=True),
 
+    description     = dict(type='str'),
+
+    # Groups that are included as members in this group
+    included_groups = dict(type='list'),
+
     # Passed straight to the API, can be a unique group name, or a group ID.
     owner           = dict(type='str'),
-
-    description     = dict(type='str'),
 )
 
 
@@ -48,6 +51,47 @@ def create_group(gerrit, name=None):
     # totally separate code path for create vs. update.
     group_info = gerrit.put('/groups/%s' % quote(name))
     return group_info
+
+
+def create_group_inclusion(gerrit, group_id, include_group_id):
+    logging.info('Creating membership of %s in group %s', include_group_id,
+                 group_id)
+    path = 'groups/%s/groups/%s' % (quote(group_id), quote(include_group_id))
+    gerrit.put(path)
+
+
+def ensure_group_includes_only(gerrit, group_id, ansible_included_groups):
+    path = 'groups/%s' % group_id
+    included_group_info_list = get_list(gerrit, path + '/groups')
+
+    changed = False
+    gerrit_included_groups = []
+    for included_group_info in included_group_info_list:
+        if included_group_info['name'] in ansible_included_groups:
+            logging.info("Preserving %s membership of %s", included_group_info,
+                         path)
+            gerrit_included_groups.append(included_group_info['name'])
+        else:
+            logging.info("Removing %s from %s", included_group_info, path)
+            membership_path = 'groups/%s/groups/%s' % (
+                quote(group_id), quote(included_group_info['id']))
+            gerrit.delete(membership_path)
+            changed = True
+
+    # If the user gave group IDs instead of group names, this will
+    # needlessly recreate the membership. The only actual issue will be that
+    # Ansible reports 'changed' when nothing really did change, I think.
+    #
+    # We might receive [""] when the user tries to pass in an empty list, so
+    # handle that.
+    to_add = set(ansible_included_groups).difference(gerrit_included_groups)
+    for include_group in to_add:
+        if len(include_group) > 0:
+            create_group_inclusion(gerrit, group_id, include_group)
+            gerrit_included_groups.append(include_group)
+            changed = True
+
+    return gerrit_included_groups, changed
 
 
 def update_group(gerrit, name=None, **params):
@@ -73,6 +117,9 @@ def update_group(gerrit, name=None, **params):
     group_id = group_info['id']
     path = 'groups/%s' % group_id
 
+    output = {}
+    output['group_id'] = group_id
+
     # Ansible sets the value of params that the user did not provide to None.
 
     if params.get('description') is not None:
@@ -81,6 +128,12 @@ def update_group(gerrit, name=None, **params):
             gerrit, path, 'description', description, params['description'])
         group_info['description'] = description
         change |= description_changed
+
+    if params.get('included_groups') is not None:
+        included_groups, included_groups_changed = ensure_group_includes_only(
+            gerrit, group_id, params['included_groups'])
+        output['included_groups'] = included_groups
+        change |= included_groups_changed
 
     if params.get('owner') is not None:
         # This code path might break if there are two groups with the same
@@ -91,7 +144,9 @@ def update_group(gerrit, name=None, **params):
         group_info['owner'] = owner
         change |= owner_changed
 
-    return group_info, change
+    output['group_info'] = group_info
+
+    return output, change
 
 
 def main():
@@ -109,9 +164,9 @@ def main():
     gerrit = gerrit_connection(**module.params)
 
     try:
-        group_info, changed = update_group(
+        output, changed = update_group(
             gerrit, **module.params)
-        module.exit_json(changed=changed, group_info=group_info)
+        module.exit_json(changed=changed, **output)
     except (AnsibleGerritError, requests.exceptions.RequestException) as e:
         logging.error('%r', e)
         module.fail_json(msg=str(e))
