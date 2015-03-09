@@ -130,8 +130,20 @@ def ensure_only_member_of_these_groups(gerrit, account_id, ansible_groups):
             logging.info("Removing %s from group %s", path, group_info)
             membership_path = 'groups/%s/members/%s' % (
                 quote(group_info['id']), account_id)
-            gerrit.delete(membership_path)
-            changed = True
+            try:
+                gerrit.delete(membership_path)
+                changed = True
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                    # This is a kludge, it'd be better to work out in advance
+                    # which groups the user is a member of only via membership
+                    # in a different. That's not trivial though with the
+                    # current API Gerrit provides.
+                    logging.info(
+                        "Ignored %s; assuming membership of this group is due "
+                        "to membership of a group that includes it.", e)
+                else:
+                    raise
 
     # If the user gave group IDs instead of group names, this will
     # needlessly recreate the membership. The only actual issue will be that
