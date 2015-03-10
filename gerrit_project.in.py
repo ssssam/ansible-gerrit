@@ -164,9 +164,9 @@ def main():
 
     logging.debug('Module parameters: %s', json.dumps(module.params, indent=4))
 
-    gerrit = gerrit_connection(**module.params)
-
     try:
+        gerrit = gerrit_connection(**module.params)
+
         if module.params['state'] == 'absent':
             changed = remove_project(gerrit, **module.params)
             module.exit_json(changed=changed)

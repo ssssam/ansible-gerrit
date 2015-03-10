@@ -181,9 +181,9 @@ def main():
 
     logging.debug('Module parameters: %s', json.dumps(module.params, indent=4))
 
-    gerrit = gerrit_connection(**module.params)
-
     try:
+        gerrit = gerrit_connection(**module.params)
+
         output, changed = update_group(
             gerrit, **module.params)
         module.exit_json(changed=changed, **output)

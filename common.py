@@ -65,6 +65,11 @@ def gerrit_connection(gerrit_url=None, gerrit_admin_username=None,
     if gerrit_admin_password is None:
         gerrit_admin_password = os.environ.get('GERRIT_ADMIN_PASSWORD')
 
+    if gerrit_url is None or len(gerrit_url) == '':
+        raise AnsibleGerritError(
+            "You must set the 'gerrit_url' parameter (or set GERRIT_URL in "
+            "your environment, if you are operating on 'localhost').")
+
     if gerrit_admin_username and gerrit_admin_password:
         auth = requests.auth.HTTPDigestAuth(
             gerrit_admin_username, gerrit_admin_password)
