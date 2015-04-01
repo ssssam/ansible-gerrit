@@ -114,8 +114,8 @@ class GitDirectory(object):
     def commit(self, author_name='', author_email='', committer_name='',
                committer_email='', commit_message='', **ignored_kwargs):
         env = os.environ.copy()
-        env['GIT_AUTHOR_EMAIL'] = committer_email
-        env['GIT_NAME_NAME'] = committer_name
+        env['GIT_AUTHOR_EMAIL'] = author_email
+        env['GIT_AUTHOR_NAME'] = author_name
         env['GIT_COMMITTER_EMAIL'] = committer_email
         env['GIT_COMMITTER_NAME'] = committer_name
         self.run_git(['commit', '--quiet', '--message', commit_message])
