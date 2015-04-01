@@ -1,6 +1,6 @@
 # Gerrit modules for Ansible.
 
-I just hacked this up in three days so don't expect too much from it yet.
+I just hacked this up in four days so don't expect too much from it yet.
 
 ## Dependencies
 
