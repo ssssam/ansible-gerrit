@@ -37,7 +37,7 @@ EXAMPLES = '''
     files:
       - ./All-Projects/groups
       - ./All-Projects/project.config
-    strip_path: All-Projects/
+    strip_path_components: 1
     author_name: Gerrit configuration scripts
     author_email: ansible@example.com
     commit_message: |
@@ -139,20 +139,24 @@ def clone_repo(module, url, path=None):
         yield git_directory
     finally:
         shutil.rmtree(path)
+        pass
 
 
-def strip_path_prefix(prefix, path):
-    if len(prefix) == 0:
+def strip_path_components(path, n_components_to_strip):
+    if n_components_to_strip == 0:
         return path
 
-    prefix = os.path.normpath(prefix)
-    path = os.path.normpath(path)
+    components = os.path.normpath(path).split(os.path.sep)
 
-    if not path.startswith(prefix):
-        raise RuntimError("Path %s does not start with prefix %s", path,
-                        prefix)
+    logging.debug("Stripping path %s: components %s, %i to strip", path,
+                  components, n_components_to_strip)
+    if n_components_to_strip >= len(components):
+        raise RuntimeError(
+            "Cannot strip more than %i component(s) from path %s" %
+            len(components), path)
 
-    return path[len(prefix):]
+    return os.path.sep.join(components[n_components_to_strip:])
+
 
 def main():
     logging.basicConfig(filename='/tmp/ansible-gerrit-debug.log',
@@ -169,7 +173,7 @@ def main():
         prepend_path    = dict(type='str', default=''),
         ref             = dict(type='str', default='master'),
         repo            = dict(type='str', required=True),
-        strip_path      = dict(type='str', default='')
+        strip_path_components = dict(type='int', default=0)
     )
 
     module = AnsibleModule(argument_spec)
@@ -184,13 +188,12 @@ def main():
             files_in_repo = []
 
             for source_path in module.params['files']:
-                stripped_path = strip_path_prefix(module.params['strip_path'],
-                                                  source_path)
-                target_path = os.path.join(repo.path,
-                                           module.params['prepend_path'],
-                                           stripped_path)
+                stripped_path = strip_path_components(
+                    source_path, module.params['strip_path_components'])
+                target_path = os.path.join(
+                    repo.path, module.params['prepend_path'], stripped_path)
                 if not os.path.exists(os.path.dirname(target_path)):
-                    os.path.makedirs(os.path.dirname(target_path))
+                    os.makedirs(os.path.dirname(target_path))
                 shutil.copy(source_path, target_path)
                 files_in_repo.append(target_path)
 
