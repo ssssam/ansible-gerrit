@@ -89,6 +89,11 @@ def update_project(gerrit, name=None, **params):
 
     try:
         config_info = gerrit.get('/projects/%s/config' % quote(name))
+
+        if 'state' not in config_info:
+            # State is only returned if it is READ_ONLY or HIDDEN
+            config_info['state'] = 'ACTIVE'
+
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
             logging.info("Project %s not found, creating it.", name)
