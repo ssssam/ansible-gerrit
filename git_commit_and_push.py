@@ -138,16 +138,22 @@ def clone_repo(module, url, path=None):
     '''Clone repo to location for the duration of a 'with' block.'''
     if path is None:
         path = tempfile.mkdtemp()
+        logging.debug('Created temporary checkout directory %s' % path)
     elif os.path.exists(path):
         raise RuntimeError("Path %s already exists, not overwriting.", path)
 
     try:
-        module.run_command(['git', 'clone', '--quiet', '--no-checkout', url, path])
+        rc, stdout, stderr = module.run_command(
+            ['git', 'clone', '--quiet', '--no-checkout', url, path])
+
+        if rc != 0:
+            raise RuntimeError('Cloning %s failed: %s' % (url, stderr))
+
         git_directory = GitDirectory(module, path)
         yield git_directory
     finally:
-        shutil.rmtree(path)
-        pass
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
 
 def strip_path_components(path, n_components_to_strip):
