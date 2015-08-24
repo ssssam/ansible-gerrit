@@ -38,10 +38,10 @@ EXAMPLES = '''
       - ./All-Projects/groups
       - ./All-Projects/project.config
     strip_path_components: 1
-    author_name: Gerrit configuration scripts
-    author_email: ansible@example.com
     commit_message: |
       Update Gerrit top-level project configuration.
+
+      This is commit was made from an Ansible playbook.
 '''
 
 
@@ -50,7 +50,7 @@ class GitDirectory(object):
         self.module = module
         self.path = path
 
-    def run_git(self, args, **kwargs):
+    def run_git(self, args):
         logging.debug("Running: %s", args)
 
         rc, stdout, stderr = self.module.run_command(
@@ -61,7 +61,7 @@ class GitDirectory(object):
         if len(stderr.strip()) > 0:
             logging.debug("Stderr: %s", stderr.strip())
 
-    def run_git_unchecked(self, args, **kwargs):
+    def run_git_unchecked(self, args):
         logging.debug("Running: git %s", args)
 
         rc, stdout, stderr = self.module.run_command(
@@ -113,12 +113,20 @@ class GitDirectory(object):
 
     def commit(self, author_name='', author_email='', committer_name='',
                committer_email='', commit_message='', **ignored_kwargs):
-        env = os.environ.copy()
-        env['GIT_AUTHOR_EMAIL'] = author_email
-        env['GIT_AUTHOR_NAME'] = author_name
-        env['GIT_COMMITTER_EMAIL'] = committer_email
-        env['GIT_COMMITTER_NAME'] = committer_name
+        # self.module.run_command() doesn't let us pass in a separate
+        # environment, so we have to temporarily change os.environ to pass this
+        # in.
+        old_env = os.environ.copy()
+        if author_email:
+            os.environ['GIT_AUTHOR_EMAIL'] = author_email
+        if author_name:
+            os.environ['GIT_AUTHOR_NAME'] = author_name
+        if committer_email:
+            os.environ['GIT_COMMITTER_EMAIL'] = committer_email
+        if committer_name:
+            os.environ['GIT_COMMITTER_NAME'] = committer_name
         self.run_git(['commit', '--quiet', '--message', commit_message])
+        os.environ = old_env
 
     def push(self, remote_url=None, local_ref=None, remote_ref=None):
         refspec = local_ref + ':' + remote_ref
@@ -166,8 +174,8 @@ def main():
         author_name     = dict(type='str'),
         author_email    = dict(type='str'),
         commit_message  = dict(type='str', required=True),
-        committer_name  = dict(type='str', default='Ansible'),
-        committer_email = dict(type='str', default='ansible@example.com'),
+        committer_name  = dict(type='str'),
+        committer_email = dict(type='str'),
         create_ref      = dict(type='bool', choices=BOOLEANS, default=False),
         files           = dict(type='list', required=True),
         prepend_path    = dict(type='str', default=''),
