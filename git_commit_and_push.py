@@ -225,7 +225,7 @@ def main():
                           remote_ref=module.params['ref'])
                 module.exit_json(changed=True)
             else:
-                logging.info("Staging area has no changed after adding files.")
+                logging.info("Staging area has no changes after adding files.")
                 module.exit_json(changed=False)
 
     except (subprocess.CalledProcessError, RuntimeError) as e:
