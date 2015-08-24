@@ -1,6 +1,12 @@
 # Gerrit modules for Ansible.
 
-I just hacked this up in four days so don't expect too much from it yet.
+These modules let you administer aspects of a Gerrit instance from an
+Ansible playbook.
+
+They have been in use for some time for managing the [Baserock
+project Gerrit instance](https://gerrit.baserock.org/). See the
+[Baserock infrastructure.git repo](http://git.baserock.org/cgi-bin/cgit.cgi/baserock/baserock/infrastructure.git/)
+for more information on how we use them there.
 
 ## Dependencies
 
